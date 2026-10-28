@@ -4,76 +4,54 @@ An MCP server that turns your computer into an **AirPlay receiver** an AI agent 
 
 Works with any MCP client (Claude Code, Claude Desktop, Cursor, …). No external apps, no GStreamer: the AirPlay protocol is handled in-process by the `pylibairplay` library. UxPlay (an AirPlay receiver) and a GStreamer pipeline source (not AirPlay) are supported as opt-in alternatives ([see below](#alternative-receivers-uxplay-gstreamer-pipeline)).
 
-## Getting started
+## Quick start
 
-Needs Python 3.12+, [uv](https://docs.astral.sh/uv/), an iPhone or iPad, and a computer on the same Wi-Fi/LAN as the phone. Allow the firewall prompt on first start: the phone has to reach the receiver on TCP 7000 and mDNS (UDP 5353).
-
-Modern iOS refuses to send the screen stream until the receiver passes Apple's FairPlay check. FairPlay can't be reimplemented from scratch, so steps 2-3 pull the needed binaries out of **your own device's firmware** and step 4 points airplay-mcp at them. Those files are Apple's and stay on your machine. Skip them and the phone will find the receiver and pair, but no video will arrive.
+You need an iPhone or iPad, a computer (Windows, macOS or Linux) on the **same Wi-Fi** as the phone, and about 15 minutes plus a multi-GB firmware download for step 2. Allow the firewall prompt the first time it runs: the phone has to reach the receiver over TCP and mDNS (UDP 5353).
 
 ### 1. Install
 
+First [uv](https://docs.astral.sh/uv/) (skip if you have it):
+
+```sh
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+```powershell
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Open a new terminal, then install airplay-mcp from [PyPI](https://pypi.org/project/airplay-mcp/):
+
 ```sh
 uv tool install "airplay-mcp[fairplay]"
+airplay-mcp --help
 ```
 
-This installs the `airplay-mcp` command from [PyPI](https://pypi.org/project/airplay-mcp/), along with the [`pylibairplay`](https://pypi.org/project/pylibairplay/) library it is built on. If `airplay-mcp` isn't found afterwards, run `uv tool update-shell` and open a new terminal.
+If `airplay-mcp` isn't found, run `uv tool update-shell` and open a new terminal. Want the `read_screen_text` OCR tool too? Install `"airplay-mcp[fairplay,ocr]"` instead.
 
-The extras are optional:
+### 2. One-time: get the FairPlay files from your own firmware
 
-| Extra | Adds |
-|---|---|
-| `fairplay` | `unicorn`, `lief`, `capstone`, so the FairPlay emulator runs. Needed for real iPhones |
-| `ocr` | the `read_screen_text` tool (RapidOCR). Install both with `"airplay-mcp[fairplay,ocr]"` |
+Recent iOS refuses to send the screen until the receiver passes Apple's FairPlay check, and FairPlay can't be reimplemented from scratch. So airplay-mcp runs the FairPlay code from **your own iPhone's firmware** in a local emulator. The files are Apple's: they stay on your machine and are never shipped or uploaded. Skip this and the phone will find the receiver and pair, but no video will arrive.
 
-Check it works: `airplay-mcp --help`.
+Install [`ipsw`](https://github.com/blacktop/ipsw), which downloads and unpacks Apple firmware. macOS: `brew install blacktop/tap/ipsw`. Windows or Linux: download a build from its [releases page](https://github.com/blacktop/ipsw/releases) and put it on your `PATH`.
 
-### 2. Install `ipsw`
-
-[`ipsw`](https://github.com/blacktop/ipsw) downloads and unpacks Apple firmware. On macOS: `brew install blacktop/tap/ipsw`. On Windows or Linux, download a build from its [releases page](https://github.com/blacktop/ipsw/releases) and put it on your `PATH`.
-
-### 3. Extract the FairPlay dylibs from your firmware
-
-Use the model identifier of the phone you will mirror from (for example `iPhone17,3`). Settings > General > About shows the model number, and `ipsw device-list` maps it to the identifier. The firmware download is several GB. Run this in a folder you will keep (for example `mkdir airplay-fp && cd airplay-fp`), because the MCP client config points at the `fpdir` it creates.
+Find your phone's model identifier (for example `iPhone17,3`): Settings > General > About shows the model number, and `ipsw device-list` maps it to the identifier. Then, in a POSIX shell (Terminal, or **Git Bash** on Windows) and in a folder you will keep:
 
 ```sh
-ipsw download ipsw --device iPhone17,3 --latest                  # 1. fetch the IPSW
-ipsw extract --dyld --dyld-arch arm64e iPhone17,3_*.ipsw -o fw   # 2. pull the dyld shared cache
-ipsw dyld extract fw/*/dyld_shared_cache_arm64e -o fpdir AirPlayReceiver AirPlaySupport CoreUtils AirPlaySender   # 3. extract the four dylibs
+mkdir airplay-fp && cd airplay-fp
+ipsw download ipsw --device iPhone17,3 --latest                  # fetch the firmware (several GB)
+ipsw extract --dyld --dyld-arch arm64e iPhone17,3_*.ipsw -o fw   # pull the dyld shared cache
+ipsw dyld extract fw/*/dyld_shared_cache_arm64e -o fpdir AirPlayReceiver AirPlaySupport CoreUtils AirPlaySender
 ```
 
-If the glob in step 3 matches nothing, find the cache with `ls fw/*`. `fpdir/` should now hold the four files. Don't commit or share it.
+Replace `iPhone17,3` with your model. If the last command matches nothing, find the cache with `ls fw/*`. `fpdir/` should now hold four files. You can delete `fw/` and the `.ipsw` afterwards; keep `fpdir/`, and don't commit or share it.
 
-### 4. Run it and point it at the dylibs
+### 3. Add it to your MCP client
 
-From the same folder:
+Run this from inside the `airplay-fp` folder, so the path fills itself in.
 
-```sh
-airplay-mcp --fp-emu-dir "$PWD/fpdir" --autostart -v
-```
-
-(Use the absolute path to `fpdir`; in PowerShell write `"$PWD\fpdir"`.)
-
-(`AIRPLAY_FP_EMU_DIR` does the same as `--fp-emu-dir`.) The emulator takes about 35 seconds to warm up.
-
-### 5. Connect the phone
-
-On the iPhone: **Control Centre > Screen Mirroring > "AI Screen"** (enter `3939` if it asks for a code). The server's log shows when the first frame arrives.
-
-### 6. Add it to your MCP client
-
-See below. Once that is done you normally don't run `airplay-mcp` by hand: the client starts it.
-
-### Troubleshooting
-
-- **The phone doesn't list "AI Screen"**: same network? VPNs and guest Wi-Fi often block mDNS. Check the firewall allowed Python.
-- **It pairs but the screen stays blank**: FairPlay isn't active. Check `--fp-emu-dir` has all four dylibs and `unicorn`/`lief`/`capstone` are installed (`uv tool install "airplay-mcp[fairplay]"`), and wait out the warm-up.
-- **Test without a phone**: see [Testing without a phone](#testing-without-a-phone).
-
-## Add it to your MCP client
-
-Run these from the folder that contains `fpdir` (the one from step 3) so the path fills itself in.
-
-**Claude Code** (macOS/Linux/Git Bash)
+**Claude Code** (macOS / Linux / Git Bash)
 ```sh
 claude mcp add airplay -e AIRPLAY_FP_EMU_DIR="$PWD/fpdir" -- airplay-mcp
 ```
@@ -83,29 +61,38 @@ claude mcp add airplay -e AIRPLAY_FP_EMU_DIR="$PWD/fpdir" -- airplay-mcp
 claude mcp add airplay -e AIRPLAY_FP_EMU_DIR="$PWD\fpdir" -- airplay-mcp
 ```
 
-The receiver then starts when the agent calls `start_receiver`. Restart the client afterwards if it was already open.
-
-**Claude Desktop, Cursor, and other JSON configs**
+**Claude Desktop, Cursor and other JSON configs**
 ```json
 {
   "mcpServers": {
     "airplay": {
       "command": "airplay-mcp",
       "env": {
-        "AIRPLAY_NAME": "AI Screen",
-        "AIRPLAY_SAVE_DIR": "/path/to/where/screenshots/go",
-        "AIRPLAY_FP_EMU_DIR": "/path/to/airplay-fp/fpdir"
+        "AIRPLAY_FP_EMU_DIR": "/absolute/path/to/airplay-fp/fpdir"
       }
     }
   }
 }
 ```
 
-Replace the two `/path/to/...` values with real absolute paths (on Windows use forward slashes or doubled backslashes). `AIRPLAY_SAVE_DIR` is optional and defaults to `~/airplay-mcp`. If your client can't find `airplay-mcp`, put the full path in `"command"` (`which airplay-mcp` on macOS/Linux, `where airplay-mcp` on Windows).
+Use a real absolute path (on Windows, forward slashes or doubled backslashes). If your client can't find `airplay-mcp`, put the full path in `"command"` (`which airplay-mcp` on macOS/Linux, `where airplay-mcp` on Windows). Restart the client if it was already open.
 
-### Configuration
+### 4. Use it
 
-Each setting can be passed as an environment variable (as above) or a command-line flag. `airplay-mcp --help` lists everything.
+Ask your agent something like: *"Turn on the AirPlay screen, wait for my phone, and tell me the next move in this Sudoku."*
+
+The agent starts the receiver and tells you what to do. On the phone: **Control Centre > Screen Mirroring > "AI Screen"** (enter `3939` if it asks for a code). The first connection takes about 35 seconds while the emulator warms up. From then on the agent can look at the screen, wait for it to change, or save frames to disk. See [How an agent uses it](#how-an-agent-uses-it).
+
+### Troubleshooting
+
+- **The phone doesn't list "AI Screen"**: same network? VPNs and guest Wi-Fi often block mDNS. Check the firewall allowed Python.
+- **It pairs but the screen stays blank**: FairPlay isn't active. Check `AIRPLAY_FP_EMU_DIR` points at a folder holding all four files, that you installed with the `fairplay` extra (`uv tool install "airplay-mcp[fairplay]"`), and wait out the warm-up.
+- **Check it outside your client**: `airplay-mcp --fp-emu-dir "/absolute/path/to/fpdir" --autostart -v` prints a log, including when the first frame arrives.
+- **Test without a phone**: see [Testing without a phone](#testing-without-a-phone).
+
+## Configuration
+
+All settings are optional. Pass them as environment variables (the `"env"` block above, or `-e NAME=value` in `claude mcp add`) or as command-line flags. `airplay-mcp --help` lists everything.
 
 | Env var | Flag | Default | Meaning |
 |---|---|---|---|
@@ -121,9 +108,9 @@ Each setting can be passed as an environment variable (as above) or a command-li
 
 The tuning options (`--ignore-top`, `--min-changed-cells`, `--sample-fps`, `--quality`) rarely need changing.
 
-### FairPlay
+## FairPlay
 
-Setup is in [Getting started](#getting-started). In short: iOS requires FairPlay, so pylibairplay runs the FairPlay code from **your own device firmware** under a local emulator. The firmware files are never shipped. `AIRPLAY_FP_EMU_DIR` must point at them, and the emulator takes about 35 seconds to warm up after `start_receiver`.
+Setup is in [Quick start](#quick-start), step 2. In short: iOS requires FairPlay, so pylibairplay runs the FairPlay code from **your own device firmware** under a local emulator. The firmware files are never shipped. `AIRPLAY_FP_EMU_DIR` must point at them, and the emulator takes about 35 seconds to warm up after `start_receiver`.
 
 ## Alternative receivers (UxPlay, GStreamer pipeline)
 
@@ -133,7 +120,7 @@ The built-in pylibairplay receiver is the default and needs nothing else install
 
 | `--receiver` | Appears in iPhone Screen Mirroring? | What it is | Needs |
 |---|---|---|---|
-| `native` (default) | Yes | pylibairplay, in-process | Your own firmware's FairPlay files (see [Getting started](#getting-started)) |
+| `native` (default) | Yes | pylibairplay, in-process | Your own firmware's FairPlay files (see [Quick start](#2-one-time-get-the-fairplay-files-from-your-own-firmware)) |
 | `uxplay` | Yes | [UxPlay](https://github.com/FDH2/UxPlay), a separate AirPlay receiver program that is itself built on GStreamer | UxPlay installed |
 | `gstreamer` | **No** | A `gst-launch-1.0` pipeline you write, as a video source for something that is not AirPlay | GStreamer installed, plus a pipeline |
 | `external` | **No** | Accepts raw H.264 pushed to a local port (for testing) | Nothing |
