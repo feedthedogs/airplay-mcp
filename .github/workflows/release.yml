@@ -1,10 +1,10 @@
 name: Release
 
 # Push a tag like v0.1.0 to build the wheel + sdist and attach them to a GitHub Release.
-# PyPI publishing is off until pylibairplay itself is on PyPI (PyPI rejects git dependencies:
-# drop the [tool.uv.sources] entry in pyproject.toml first). Then set up a trusted publisher
-# on pypi.org (workflow: release.yml, environment: pypi) and set the repository variable
-# PUBLISH_TO_PYPI to "true".
+# PyPI publishing is off until you set up a trusted publisher on pypi.org (project airplay-mcp,
+# owner feedthedogs, repo airplay-mcp, workflow release.yml, environment pypi) and set the
+# repository variable PUBLISH_TO_PYPI to "true". Publish pylibairplay first: this package
+# depends on it by version.
 
 on:
   push:
