@@ -4,6 +4,17 @@ An MCP server that turns your computer into an **AirPlay receiver** an AI agent 
 
 Works with any MCP client (Claude Code, Claude Desktop, Cursor, …). No external apps, no GStreamer: the AirPlay protocol is handled in-process by the `pylibairplay` library. UxPlay (an AirPlay receiver) and a GStreamer pipeline source (not AirPlay) are supported as opt-in alternatives ([see below](#alternative-receivers-uxplay-gstreamer-pipeline)).
 
+## See it in action
+
+<table>
+  <tr>
+    <td width="30%"><img src="https://raw.githubusercontent.com/feedthedogs/airplay-mcp/main/assets/crossword-iphone.png" alt="An iPhone showing a mini crossword with the 8-Across clue highlighted"></td>
+    <td width="70%"><img src="https://raw.githubusercontent.com/feedthedogs/airplay-mcp/main/assets/claude-answers.png" alt="An agent calls get_screen on the phone and answers the highlighted clue: CREAMED"></td>
+  </tr>
+</table>
+
+Left: a frame captured from an iPhone mirroring a crossword app. Right: an agent calling `get_screen`, reading the highlighted clue off that frame, and answering it.
+
 ## Quick start
 
 You need an iPhone or iPad, a computer (Windows, macOS or Linux) on the **same Wi-Fi** as the phone, and about 15 minutes plus a multi-GB firmware download for step 2. Allow the firewall prompt the first time it runs: the phone has to reach the receiver over TCP and mDNS (UDP 5353).
