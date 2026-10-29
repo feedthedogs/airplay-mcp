@@ -67,4 +67,4 @@ If it fails:
 
 - **The phone doesn't list the receiver.** It's a network or firewall problem; see step 1.
 - **The phone pairs but no video arrives (native).** The FairPlay folder is wrong or incomplete.
-- **To see the receiver's log,** run outside the client: `uvx --from "airplay-mcp[fairplay]" airplay-mcp --autostart -v` (add `--fp-emu-dir <path>` or `--receiver uxplay`).
+- **To see the receiver's log,** run outside the client: `uvx airplay-mcp --autostart -v` (add `--fp-emu-dir <path>` or `--receiver uxplay`).

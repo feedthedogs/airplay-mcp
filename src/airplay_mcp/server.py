@@ -401,7 +401,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                          "firmware; machine-local, see README [AIRPLAY_FP_EMU_DIR]")
     fp.add_argument("--fp-emu-python", default=_env("FP_EMU_PYTHON"),
                     help="interpreter with unicorn/lief/capstone for the emulator; defaults to this "
-                         "one (install the [fairplay] extra) [AIRPLAY_FP_EMU_PYTHON]")
+                         "one [AIRPLAY_FP_EMU_PYTHON]")
 
     u = p.add_argument_group("UxPlay (--receiver uxplay)")
     u.add_argument("--uxplay-path", default=_env("UXPLAY_PATH"),

@@ -49,11 +49,11 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 Open a new terminal, then install airplay-mcp from [PyPI](https://pypi.org/project/airplay-mcp/):
 
 ```sh
-uv tool install "airplay-mcp[fairplay]"
+uv tool install airplay-mcp
 airplay-mcp --help
 ```
 
-If `airplay-mcp` isn't found, run `uv tool update-shell` and open a new terminal. Want the `read_screen_text` OCR tool too? Install `"airplay-mcp[fairplay,ocr]"` instead.
+If `airplay-mcp` isn't found, run `uv tool update-shell` and open a new terminal. Want the `read_screen_text` OCR tool too? Install `"airplay-mcp[ocr]"` instead.
 
 ### 2. One-time: get the FairPlay files from your own firmware
 
@@ -111,7 +111,7 @@ The agent starts the receiver and tells you what to do. On the phone: **Control 
 ### Troubleshooting
 
 - **The phone doesn't list "AI Screen"**: same network? VPNs and guest Wi-Fi often block mDNS. Check the firewall allowed Python.
-- **It pairs but the screen stays blank**: FairPlay isn't active. Check `AIRPLAY_FP_EMU_DIR` points at a folder holding all four files, that you installed with the `fairplay` extra (`uv tool install "airplay-mcp[fairplay]"`), and wait out the warm-up.
+- **It pairs but the screen stays blank**: FairPlay isn't active. Check `AIRPLAY_FP_EMU_DIR` points at a folder holding all four files, that you are on airplay-mcp 0.1.4 or later (`uv tool upgrade airplay-mcp`), and wait out the warm-up.
 - **Check it outside your client**: `airplay-mcp --fp-emu-dir "/absolute/path/to/fpdir" --autostart -v` prints a log, including when the first frame arrives.
 - **Test without a phone**: see [Testing without a phone](#testing-without-a-phone).
 
@@ -126,7 +126,7 @@ All settings are optional. Pass them as environment variables (the `"env"` block
 | `AIRPLAY_SAVE_DIR` | `--save-dir` | `~/airplay-mcp` | Where `save_screen` writes files given as relative paths |
 | `AIRPLAY_AUTOSTART` | `--autostart` | off | Start the receiver at launch, not when the agent calls `start_receiver` |
 | `AIRPLAY_FP_EMU_DIR` | `--fp-emu-dir` | — | Enables FairPlay (see below) |
-| `AIRPLAY_FP_EMU_PYTHON` | `--fp-emu-python` | this Python | Interpreter with `unicorn`/`lief`/`capstone`, if not using the `fairplay` extra |
+| `AIRPLAY_FP_EMU_PYTHON` | `--fp-emu-python` | this Python | A different interpreter with `unicorn`/`lief`/`capstone` to run the emulator under (rarely needed) |
 | `AIRPLAY_MAX_DIM` | `--max-dim` | `1024` | Default longest edge of images sent to the model |
 | `AIRPLAY_TRANSPORT` | `--transport` | `stdio` | `http` serves streamable HTTP at `http://HOST:PORT/mcp` |
 | `AIRPLAY_HOST` / `AIRPLAY_PORT` | `--host` / `--port` | `127.0.0.1` / `8765` | HTTP bind address (no auth, so only expose it on trusted networks) |
@@ -167,7 +167,7 @@ If your goal is "mirror my iPhone and I'd rather not extract firmware", use `uxp
      cmake -S . -B build -G Ninja && cmake --build build
      ```
      Then add `C:\msys64\ucrt64\bin` to your Windows `PATH` (uxplay needs the DLLs in it), set `AIRPLAY_UXPLAY_PATH` to `C:\msys64\home\<your user>\UxPlay\build\uxplay.exe`, allow `uxplay.exe` through the firewall, and set your Wi-Fi profile to **Private**.
-2. Install airplay-mcp (`uv tool install airplay-mcp` is enough here; no `fairplay` extra needed) and add it to your client:
+2. Install airplay-mcp (`uv tool install airplay-mcp`) and add it to your client:
 
 ```sh
 claude mcp add airplay -e AIRPLAY_RECEIVER=uxplay -- airplay-mcp
@@ -250,7 +250,7 @@ Everything runs locally. Frames stay in memory on your computer and reach your A
 
 ```sh
 git clone https://github.com/feedthedogs/airplay-mcp && cd airplay-mcp
-uv sync --extra fairplay
+uv sync
 uv run pytest
 npx @modelcontextprotocol/inspector uv run airplay-mcp --external
 ```

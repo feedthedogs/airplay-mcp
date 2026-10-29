@@ -8,22 +8,20 @@ resolution-markers = [
 
 [[package]]
 name = "airplay-mcp"
-version = "0.1.3"
+version = "0.1.4"
 source = { editable = "." }
 dependencies = [
     { name = "av" },
+    { name = "capstone" },
+    { name = "lief" },
     { name = "mcp", extra = ["cli"] },
     { name = "numpy" },
     { name = "pillow" },
     { name = "pylibairplay", extra = ["net"] },
+    { name = "unicorn" },
 ]
 
 [package.optional-dependencies]
-fairplay = [
-    { name = "capstone" },
-    { name = "lief" },
-    { name = "unicorn" },
-]
 ocr = [
     { name = "onnxruntime" },
     { name = "rapidocr" },
@@ -38,17 +36,17 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "av", specifier = ">=19.0.2" },
-    { name = "capstone", marker = "extra == 'fairplay'", specifier = ">=5" },
-    { name = "lief", marker = "extra == 'fairplay'", specifier = ">=0.14" },
+    { name = "capstone", specifier = ">=5" },
+    { name = "lief", specifier = ">=0.14" },
     { name = "mcp", extras = ["cli"], specifier = ">=2.3.0" },
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "onnxruntime", marker = "extra == 'ocr'" },
     { name = "pillow", specifier = ">=13.0.0" },
     { name = "pylibairplay", extras = ["net"], specifier = ">=0.1.1" },
     { name = "rapidocr", marker = "extra == 'ocr'", specifier = ">=2" },
-    { name = "unicorn", marker = "extra == 'fairplay'", specifier = ">=2" },
+    { name = "unicorn", specifier = ">=2" },
 ]
-provides-extras = ["ocr", "fairplay"]
+provides-extras = ["ocr"]
 
 [package.metadata.requires-dev]
 dev = [

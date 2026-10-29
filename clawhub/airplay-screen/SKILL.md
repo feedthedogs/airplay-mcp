@@ -1,7 +1,7 @@
 ---
 name: airplay-screen
 description: See the user's iPhone or iPad screen. Sets up airplay-mcp, a local AirPlay receiver, registers it as an MCP server, and then reads the mirrored screen frame by frame. Use when the user wants you to look at, follow or save what is on their phone.
-version: 0.1.3
+version: 0.1.4
 metadata:
   openclaw:
     emoji: "📱"
@@ -41,7 +41,7 @@ metadata:
 
 Tell the user what you are about to install or download before you run each step.
 
-1. **Install the server:** `uv tool install --upgrade "airplay-mcp[fairplay]"`. The `fairplay` extra adds the emulator libraries the native receiver needs. Check it with `airplay-mcp --help`.
+1. **Install the server:** `uv tool install --upgrade airplay-mcp` (0.1.4 or later includes the emulator libraries the native receiver needs). Check it with `airplay-mcp --help`.
 2. **Pick a receiver** with the user. Recent iOS sends no video until the receiver passes Apple's FairPlay check, and there are two ways to handle that:
    - **native** (default): run the FairPlay code from **the user's own iPhone firmware** in a local emulator. Any OS, but the firmware download is several GB. The extracted files must never be uploaded or shared.
    - **uxplay**: install [UxPlay](https://github.com/FDH2/UxPlay) 1.73 or later, which handles FairPlay itself. Easy on macOS (`brew install uxplay`) and Debian/Ubuntu (`sudo apt install uxplay`). On Windows it has to be built with MSYS2: follow the [README steps](https://github.com/feedthedogs/airplay-mcp#uxplay).
@@ -79,5 +79,5 @@ Tell the user what you are about to install or download before you run each step
 ## Troubleshooting
 
 - **The phone doesn't list "AI Screen".** Check the network and the firewall (see above).
-- **It pairs but the screen stays blank (native).** `AIRPLAY_FP_EMU_DIR` is wrong or incomplete, or the `fairplay` extra is missing.
+- **It pairs but the screen stays blank (native).** `AIRPLAY_FP_EMU_DIR` is wrong or incomplete, or airplay-mcp is older than 0.1.4 (`uv tool upgrade airplay-mcp`).
 - **To see the log:** `airplay-mcp --autostart -v` (plus `--fp-emu-dir <path>` or `--receiver uxplay`).
