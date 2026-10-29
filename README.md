@@ -15,6 +15,20 @@ Works with any MCP client (Claude Code, Claude Desktop, Cursor, …). No externa
 
 Left: a frame captured from an iPhone mirroring a crossword app. Right: an agent calling `get_screen`, reading the highlighted clue off that frame, and answering it.
 
+## Install as a Claude Code plugin
+
+In Claude Code you can skip most of the manual steps below. Install the plugin and let the agent do the setup:
+
+```
+/plugin install airplay-mcp --marketplace feedthedogs/airplay-mcp
+```
+
+(On Claude Code older than 2.1.275, first run `/plugin marketplace add feedthedogs/airplay-mcp`, then `/plugin install airplay-mcp@airplay-mcp`.)
+
+Then run `/airplay-mcp:setup`. The agent installs [uv](https://docs.astral.sh/uv/), asks whether you want the built-in receiver (it extracts the FairPlay files from your own firmware with `ipsw`) or [UxPlay](#uxplay), installs that, and tells you which plugin settings to fill in under `/plugin`. The plugin works in Claude Code and other clients that run local MCP servers. It can't work from claude.ai in a browser, because the receiver has to be on the same Wi-Fi as your phone.
+
+The same flow is published for OpenClaw as the [`airplay-screen` ClawHub skill](clawhub/airplay-screen/SKILL.md).
+
 ## Quick start
 
 You need an iPhone or iPad, a computer (Windows, macOS or Linux) on the **same Wi-Fi** as the phone, and about 15 minutes plus a multi-GB firmware download for step 2. Allow the firewall prompt the first time it runs: the phone has to reach the receiver over TCP and mDNS (UDP 5353).
@@ -191,7 +205,12 @@ The server explains this flow to the model in its MCP instructions. A typical se
 4. Repeat steps 2 and 3 as the user works on the phone.
 5. **`stop_receiver`** when finished.
 
-Example prompts: *"Turn on the AirPlay screen, wait for my phone, and tell me the next move in this Sudoku."* *"Start AirPlay and save a screenshot to ./shots every time my screen changes, until I say stop."*
+Example prompts:
+
+- *"Turn on the AirPlay screen, wait for my phone, and tell me the next move in this Sudoku."*
+- *"Look at the crossword on my phone and solve the highlighted clue."*
+- *"Start AirPlay and save a screenshot to ./shots every time my screen changes, until I say stop."*
+- *"I'm going to scroll through a long article on my phone. Read along and summarise it when I'm done."*
 
 ### Tools
 
@@ -222,6 +241,10 @@ Dedupe is tracked per client connection. Stateless HTTP clients get a new connec
 ```sh
 ffmpeg -re -i clip.mp4 -an -c:v libx264 -f h264 tcp://127.0.0.1:<port>
 ```
+
+## Privacy and support
+
+Everything runs locally. Frames stay in memory on your computer and reach your AI client only when the agent asks for them, and nothing is uploaded by airplay-mcp itself. See [PRIVACY.md](PRIVACY.md). Report bugs and ask questions in [GitHub issues](https://github.com/feedthedogs/airplay-mcp/issues).
 
 ## Development
 

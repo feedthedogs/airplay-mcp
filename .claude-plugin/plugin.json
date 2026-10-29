@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "airplay-mcp",
+  "displayName": "AirPlay Screen",
+  "version": "0.1.3",
+  "description": "Turns your computer into an AirPlay receiver so Claude can see your mirrored iPhone or iPad screen. Runs locally: needs Claude Code or Claude Desktop on the same Wi-Fi as the phone. Run /airplay-mcp:setup first.",
+  "author": {
+    "name": "feedthedogs",
+    "url": "https://github.com/feedthedogs"
+  },
+  "homepage": "https://github.com/feedthedogs/airplay-mcp",
+  "repository": "https://github.com/feedthedogs/airplay-mcp",
+  "license": "MIT",
+  "keywords": ["airplay", "iphone", "ipad", "screen-mirroring", "mcp", "vision"],
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://github.com/feedthedogs/airplay-mcp#readme",
+  "supportUrl": "https://github.com/feedthedogs/airplay-mcp/issues",
+  "privacyPolicyUrl": "https://github.com/feedthedogs/airplay-mcp/blob/main/PRIVACY.md",
+  "userConfig": {
+    "receiver": {
+      "type": "string",
+      "title": "Receiver",
+      "description": "native = built-in receiver (needs the FairPlay folder below); uxplay = the UxPlay program. /airplay-mcp:setup helps you pick and install.",
+      "options": ["native", "uxplay"],
+      "default": "native"
+    },
+    "fp_emu_dir": {
+      "type": "directory",
+      "title": "FairPlay folder (native only)",
+      "description": "Folder holding the four files extracted from your own iPhone firmware. Leave blank for uxplay.",
+      "default": ""
+    },
+    "uxplay_path": {
+      "type": "string",
+      "title": "UxPlay executable (uxplay only)",
+      "description": "Full path to uxplay if it is not on PATH (usual on Windows). Leave blank otherwise.",
+      "default": ""
+    },
+    "device_name": {
+      "type": "string",
+      "title": "AirPlay name",
+      "description": "Name your phone shows under Screen Mirroring.",
+      "default": "AI Screen"
+    }
+  },
+  "mcpServers": {
+    "airplay": {
+      "command": "uvx",
+      "args": ["--from", "airplay-mcp[fairplay]==0.1.3", "airplay-mcp"],
+      "env": {
+        "AIRPLAY_RECEIVER": "${user_config.receiver}",
+        "AIRPLAY_FP_EMU_DIR": "${user_config.fp_emu_dir}",
+        "AIRPLAY_UXPLAY_PATH": "${user_config.uxplay_path}",
+        "AIRPLAY_NAME": "${user_config.device_name}"
+      }
+    }
+  }
+}

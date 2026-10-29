@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "airplay-mcp",
+  "description": "AirPlay screen mirroring for AI agents: let Claude see your iPhone or iPad.",
+  "owner": {
+    "name": "feedthedogs",
+    "url": "https://github.com/feedthedogs"
+  },
+  "plugins": [
+    {
+      "name": "airplay-mcp",
+      "source": "./",
+      "description": "Let Claude see your mirrored iPhone or iPad screen over AirPlay."
+    }
+  ]
+}

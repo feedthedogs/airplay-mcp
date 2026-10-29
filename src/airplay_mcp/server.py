@@ -365,8 +365,11 @@ def _client_key(ctx: Context) -> object:
 
 
 def _env(name: str, default: object = None) -> object:
-    """Option default from AIRPLAY_<NAME>; argparse applies the option's type to string defaults."""
-    return os.environ.get(f"AIRPLAY_{name}", default)
+    """Option default from AIRPLAY_<NAME>; argparse applies the option's type to string defaults.
+
+    An empty value counts as unset: plugin hosts substitute "" for options the user left blank.
+    """
+    return os.environ.get(f"AIRPLAY_{name}") or default
 
 
 def _env_flag(name: str) -> bool:
