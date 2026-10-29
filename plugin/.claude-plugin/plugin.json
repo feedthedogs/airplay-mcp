@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "airplay-mcp",
   "displayName": "AirPlay Screen",
   "version": "0.1.3",
@@ -12,7 +11,7 @@
   "repository": "https://github.com/feedthedogs/airplay-mcp",
   "license": "MIT",
   "keywords": ["airplay", "iphone", "ipad", "screen-mirroring", "mcp", "vision"],
-  "icon": "./assets/icon.png",
+  "icon": "./icon.png",
   "documentationUrl": "https://github.com/feedthedogs/airplay-mcp#readme",
   "supportUrl": "https://github.com/feedthedogs/airplay-mcp/issues",
   "privacyPolicyUrl": "https://github.com/feedthedogs/airplay-mcp/blob/main/PRIVACY.md",
@@ -20,8 +19,7 @@
     "receiver": {
       "type": "string",
       "title": "Receiver",
-      "description": "native = built-in receiver (needs the FairPlay folder below); uxplay = the UxPlay program. /airplay-mcp:setup helps you pick and install.",
-      "options": ["native", "uxplay"],
+      "description": "Type native (built-in receiver, needs the FairPlay folder below) or uxplay (the UxPlay program). /airplay-mcp:setup helps you pick and install.",
       "default": "native"
     },
     "fp_emu_dir": {
@@ -41,18 +39,6 @@
       "title": "AirPlay name",
       "description": "Name your phone shows under Screen Mirroring.",
       "default": "AI Screen"
-    }
-  },
-  "mcpServers": {
-    "airplay": {
-      "command": "uvx",
-      "args": ["--from", "airplay-mcp[fairplay]==0.1.3", "airplay-mcp"],
-      "env": {
-        "AIRPLAY_RECEIVER": "${user_config.receiver}",
-        "AIRPLAY_FP_EMU_DIR": "${user_config.fp_emu_dir}",
-        "AIRPLAY_UXPLAY_PATH": "${user_config.uxplay_path}",
-        "AIRPLAY_NAME": "${user_config.device_name}"
-      }
     }
   }
 }

@@ -17,11 +17,12 @@ Work through the steps below in order. Before installing anything or downloading
 ## 1. Check the basics
 
 - The computer and the phone must be on the **same Wi-Fi**. VPNs, guest networks and cloud VMs block mDNS, and then the phone won't see the receiver.
-- Check that `uvx --version` works. If it doesn't, install uv:
-  - macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-  - Windows (PowerShell): `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+- Check that `uvx --version` works. If it doesn't, install [uv](https://docs.astral.sh/uv/) with the system package manager:
+  - macOS: `brew install uv`
+  - Windows: `winget install --id=astral-sh.uv -e`
+  - Linux: the distro's `uv` package if it has one, otherwise `pipx install uv`
 
-  Then tell the user to restart Claude Code so the MCP server can find `uvx`.
+  If none of these is available, send the user to https://docs.astral.sh/uv/getting-started/installation/ to install it themselves. Then tell the user to restart Claude Code so the MCP server can find `uvx`.
 
 ## 2. Pick a receiver
 

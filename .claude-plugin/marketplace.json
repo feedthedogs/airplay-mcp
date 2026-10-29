@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "airplay-mcp",
-      "source": "./",
+      "source": "./plugin",
       "description": "Let Claude see your mirrored iPhone or iPad screen over AirPlay."
     }
   ]
