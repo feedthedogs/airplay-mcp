@@ -2,7 +2,7 @@
   "mcpServers": {
     "airplay": {
       "command": "uvx",
-      "args": ["--from", "airplay-mcp[fairplay]==0.1.3", "airplay-mcp"],
+      "args": ["airplay-mcp==0.1.4"],
       "env": {
         "AIRPLAY_RECEIVER": "${user_config.receiver}",
         "AIRPLAY_FP_EMU_DIR": "${user_config.fp_emu_dir}",

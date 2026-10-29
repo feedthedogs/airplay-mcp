@@ -2,9 +2,9 @@
 # Bump the airplay-mcp version here and in .mcp.json together, then run `uv lock`.
 [project]
 name = "airplay-mcp-plugin"
-version = "0.1.3"
+version = "0.1.4"
 requires-python = ">=3.12"
-dependencies = ["airplay-mcp[fairplay]==0.1.3"]
+dependencies = ["airplay-mcp==0.1.4"]
 
 [tool.uv]
 package = false
