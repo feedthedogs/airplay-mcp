@@ -1,7 +1,7 @@
 {
   "name": "airplay-mcp",
   "displayName": "AirPlay Screen",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Turns your computer into an AirPlay receiver so Claude can see your mirrored iPhone or iPad screen. Runs locally: needs Claude Code or Claude Desktop on the same Wi-Fi as the phone. Run /airplay-mcp:setup first.",
   "author": {
     "name": "feedthedogs",

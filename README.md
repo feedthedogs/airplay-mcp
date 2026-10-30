@@ -59,18 +59,18 @@ If `airplay-mcp` isn't found, run `uv tool update-shell` and open a new terminal
 
 Recent iOS refuses to send the screen until the receiver passes Apple's FairPlay check, and FairPlay can't be reimplemented from scratch. So airplay-mcp runs the FairPlay code from **your own iPhone's firmware** in a local emulator. The files are Apple's: they stay on your machine and are never shipped or uploaded. Skip this and the phone will find the receiver and pair, but no video will arrive.
 
-Install [`ipsw`](https://github.com/blacktop/ipsw), which downloads and unpacks Apple firmware. macOS: `brew install blacktop/tap/ipsw`. Windows or Linux: download a build from its [releases page](https://github.com/blacktop/ipsw/releases) and put it on your `PATH`.
+Install [`ipsw`](https://github.com/blacktop/ipsw), which downloads and unpacks Apple firmware. macOS: `brew install blacktop/tap/ipsw`. Windows or Linux: download a build from its [releases page](https://github.com/blacktop/ipsw/releases) and put it on your `PATH`. On Linux, ipsw also needs [`apfs-fuse`](https://github.com/sgan81/apfs-fuse) to read the firmware's APFS image: install it from your distro if packaged, or build it from source, and set `IPSW_APFS_FUSE_PATH` if it isn't on your `PATH`.
 
 Find your phone's model identifier (for example `iPhone17,3`): Settings > General > About shows the model number, and `ipsw device-list` maps it to the identifier. Then, in a POSIX shell (Terminal, or **Git Bash** on Windows) and in a folder you will keep:
 
 ```sh
 mkdir airplay-fp && cd airplay-fp
-ipsw download ipsw --device iPhone17,3 --latest                  # fetch the firmware (several GB)
-ipsw extract --dyld --dyld-arch arm64e iPhone17,3_*.ipsw -o fw   # pull the dyld shared cache
+URL="$(ipsw download ipsw --device iPhone17,3 --latest --urls | head -1)"   # firmware URL on Apple's CDN
+ipsw extract --dyld --dyld-arch arm64e --remote -o fw "$URL"                 # pull just the dyld shared cache (~2.5 GB read)
 ipsw dyld extract fw/*/dyld_shared_cache_arm64e -o fpdir AirPlayReceiver AirPlaySupport CoreUtils AirPlaySender
 ```
 
-Replace `iPhone17,3` with your model. If the last command matches nothing, find the cache with `ls fw/*`. `fpdir/` should now hold four files. You can delete `fw/` and the `.ipsw` afterwards; keep `fpdir/`, and don't commit or share it.
+Replace `iPhone17,3` with your model. Allow ~20 GB of free disk while it runs. If the last command matches nothing, find the cache with `ls fw/*`. `fpdir/` should now hold four files. You can delete `fw/` afterwards; keep `fpdir/`, and don't commit or share it.
 
 ### 3. Add it to your MCP client
 

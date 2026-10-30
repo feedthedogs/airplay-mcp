@@ -33,15 +33,16 @@ Ask the user which receiver they want. Explain the trade-off above, and recommen
 1. Install [ipsw](https://github.com/blacktop/ipsw):
    - macOS: `brew install blacktop/tap/ipsw`
    - Windows or Linux: download the latest release archive for the platform from https://github.com/blacktop/ipsw/releases, unpack it and put `ipsw` on `PATH` (or call it by its full path).
+   - Linux also needs [apfs-fuse](https://github.com/sgan81/apfs-fuse), which ipsw uses to read the firmware's APFS image. Install it from the distro if packaged, or build it from source, and set `IPSW_APFS_FUSE_PATH` if it isn't on `PATH`.
 2. Get the phone's model identifier, for example `iPhone17,3`. Ask the user for the model number shown in Settings > General > About, or the marketing name, and look it up with `ipsw device-list`.
-3. Run these in a POSIX shell (Git Bash on Windows) inside `${CLAUDE_PLUGIN_DATA}/airplay-fp`, replacing `MODEL` with the identifier. The download is several GB, so run it in the background and tell the user it will take a while.
+3. Run these in a POSIX shell (Git Bash on Windows) inside `${CLAUDE_PLUGIN_DATA}/airplay-fp`, replacing `MODEL` with the identifier. `--remote` reads only the system image from Apple's CDN (~2.5 GB) instead of the whole IPSW (~13 GB), but it still takes a few minutes and ~20 GB of free disk, so run it in the background and tell the user.
    ```sh
-   ipsw download ipsw --device MODEL --latest
-   ipsw extract --dyld --dyld-arch arm64e MODEL_*.ipsw -o fw
+   URL="$(ipsw download ipsw --device MODEL --latest --urls | head -1)"
+   ipsw extract --dyld --dyld-arch arm64e --remote -o fw "$URL"
    ipsw dyld extract fw/*/dyld_shared_cache_arm64e -o fpdir AirPlayReceiver AirPlaySupport CoreUtils AirPlaySender
    ```
    If the last command matches nothing, find the cache with `ls fw/*`.
-4. Check that `fpdir/` holds four files, then delete `fw/` and the `.ipsw` to free the space.
+4. Check that `fpdir/` holds four files, then delete `fw/` to free the space.
 5. Tell the user to open `/plugin`, choose **airplay-mcp** and configure it: **Receiver** = `native`, **FairPlay folder** = the absolute path of `${CLAUDE_PLUGIN_DATA}/airplay-fp/fpdir`. Then restart Claude Code.
 
 ## 3b. uxplay: install UxPlay 1.73 or later
