@@ -2,11 +2,8 @@
   "mcpServers": {
     "airplay": {
       "command": "uvx",
-      "args": ["airplay-mcp==0.1.4"],
+      "args": ["airplay-mcp==0.2.0"],
       "env": {
-        "AIRPLAY_RECEIVER": "${user_config.receiver}",
-        "AIRPLAY_FP_EMU_DIR": "${user_config.fp_emu_dir}",
-        "AIRPLAY_UXPLAY_PATH": "${user_config.uxplay_path}",
         "AIRPLAY_NAME": "${user_config.device_name}"
       }
     }

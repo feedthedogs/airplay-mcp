@@ -73,11 +73,8 @@ def anyio_backend():
 
 
 def test_empty_env_counts_as_unset(monkeypatch):
-    # Plugin hosts pass "" for options the user left blank.
-    monkeypatch.setenv("AIRPLAY_FP_EMU_DIR", "")
     monkeypatch.setenv("AIRPLAY_RECEIVER", "")
     monkeypatch.setenv("AIRPLAY_NAME", "")
     args = parse_args([])
-    assert args.fp_emu_dir is None
     assert args.receiver == "native"
     assert args.name == "AI Screen"

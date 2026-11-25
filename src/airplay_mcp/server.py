@@ -1,10 +1,7 @@
 """MCP server: exposes the mirrored phone screen with token-frugal tools.
 
 Every option can also be set with an AIRPLAY_* environment variable (e.g.
-AIRPLAY_NAME, AIRPLAY_FP_EMU_DIR), which is handy in MCP client JSON configs.
-
-The receiver defaults to the in-process pylibairplay one. ``--receiver uxplay`` and
-``--receiver gstreamer`` are opt-in alternatives that need external programs.
+AIRPLAY_NAME), which is handy in MCP client JSON configs.
 """
 
 from __future__ import annotations
@@ -30,7 +27,7 @@ from pydantic import Field
 from . import imaging, ocr
 from .decoder import StreamDecoder
 from .frames import ChangeConfig, FrameStore
-from .receivers import GStreamerReceiver, NativeReceiver, Receiver, ReceiverStatus, UxPlayReceiver
+from .receivers import NativeReceiver, Receiver, ReceiverStatus
 from .service import ScreenService
 
 log = logging.getLogger("airplay_mcp")
@@ -102,16 +99,9 @@ def build_server(args: argparse.Namespace) -> MCPServer:
     receiver: Receiver
     if args.receiver == "external":
         receiver = NullReceiver(decoder.port)
-    elif args.receiver == "uxplay":
-        receiver = UxPlayReceiver(
-            decoder.port, name=args.name, uxplay_path=args.uxplay_path, fps=args.fps, extra_args=args.uxplay_arg
-        )
-    elif args.receiver == "gstreamer":
-        receiver = GStreamerReceiver(decoder.port, args.gst_pipeline, args.gst_path)
     else:
         receiver = NativeReceiver(
-            decoder.port, name=args.name, fp_emu_dir=args.fp_emu_dir,
-            fp_emu_python=args.fp_emu_python, pin=args.pin,
+            decoder, name=args.name, pin=args.pin,
         )
     service = ScreenService(
         store, receiver.status, lambda: decoder.streaming, default_max_dim=args.max_dim, jpeg_quality=args.quality,
@@ -124,7 +114,7 @@ def build_server(args: argparse.Namespace) -> MCPServer:
         """Debounced resource-updated notifications once the screen settles on a new seq."""
         announced = 0
         while True:
-            await anyio.sleep(0.5)
+            await anyio.sleep(0.1)
             seq = store.seq
             if seq == announced or time.time() - store.last_motion < 0.3:  # still moving
                 continue
@@ -183,25 +173,12 @@ def build_server(args: argparse.Namespace) -> MCPServer:
         await anyio.to_thread.run_sync(receiver.start)
         if args.receiver == "external":
             return f"Accepting a raw H.264 stream on tcp://127.0.0.1:{decoder.port}."
-        if args.receiver == "gstreamer":
-            return f"GStreamer source: {receiver.status().detail}. Then call wait_for_change to wait for the first frame."
         lines = [
             "AirPlay receiver is already on." if already else "AirPlay receiver is on.",
             f"Ask the user to open Control Centre > Screen Mirroring on their iPhone/iPad and pick "
             f"'{args.name}' (same Wi-Fi network as this computer). If asked for a code, it is {args.pin}.",
+            "Then call wait_for_change to wait for the first frame.",
         ]
-        if args.receiver == "uxplay":
-            st = receiver.status()
-            if not st.running and st.detail:
-                lines.append(f"Problem: {st.detail}")
-        elif args.fp_emu_dir and not already:
-            lines.append("The FairPlay emulator takes ~35s to warm up; mirroring works after that.")
-        elif not args.fp_emu_dir:
-            lines.append(
-                "Note: FairPlay is not configured (AIRPLAY_FP_EMU_DIR). Recent iOS versions need it, "
-                "so the phone may connect without any video arriving."
-            )
-        lines.append("Then call wait_for_change to wait for the first frame.")
         return "\n".join(lines)
 
     @server.tool(annotations=control, structured_output=False)
@@ -381,11 +358,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "airplay-mcp", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     p.add_argument("--name", default=_env("NAME", "AI Screen"), help="AirPlay name shown on the phone [AIRPLAY_NAME]")
-    p.add_argument("--receiver", choices=["native", "uxplay", "gstreamer", "external"],
+    p.add_argument("--receiver", choices=["native", "external"],
                    default=_env("RECEIVER", "native"),
-                   help="video source. AirPlay (iPhone can mirror to it): native = built-in pylibairplay "
-                        "(default), uxplay = UxPlay program. NOT AirPlay: gstreamer = your own gst-launch "
-                        "pipeline, external = raw H.264 on --stream-port [AIRPLAY_RECEIVER]")
+                   help="video source: native = built-in pylibairplay (default), "
+                        "external = raw H.264 on --stream-port [AIRPLAY_RECEIVER]")
     p.add_argument("--pin", default=_env("PIN", "3939"), help="pairing PIN shown on the phone [AIRPLAY_PIN]")
     p.add_argument("--autostart", action="store_true", default=_env_flag("AUTOSTART"),
                    help="turn the receiver on at launch instead of on start_receiver [AIRPLAY_AUTOSTART]")
@@ -394,28 +370,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("-v", "--verbose", action="store_true", default=_env_flag("VERBOSE"), help="[AIRPLAY_VERBOSE]")
     p.add_argument("--log-file", default=_env("LOG_FILE"),
                    help="also append logs to this file (MCP clients often discard stderr) [AIRPLAY_LOG_FILE]")
-
-    fp = p.add_argument_group("FairPlay (needed by recent iOS versions)")
-    fp.add_argument("--fp-emu-dir", default=_env("FP_EMU_DIR"),
-                    help="dir with AirPlayReceiver + sibling dylibs extracted from your own device "
-                         "firmware; machine-local, see README [AIRPLAY_FP_EMU_DIR]")
-    fp.add_argument("--fp-emu-python", default=_env("FP_EMU_PYTHON"),
-                    help="interpreter with unicorn/lief/capstone for the emulator; defaults to this "
-                         "one [AIRPLAY_FP_EMU_PYTHON]")
-
-    u = p.add_argument_group("UxPlay (--receiver uxplay)")
-    u.add_argument("--uxplay-path", default=_env("UXPLAY_PATH"),
-                   help="path to the uxplay executable; default: look on PATH [AIRPLAY_UXPLAY_PATH]")
-    u.add_argument("--uxplay-arg", action="append", default=[],
-                   help="extra argument for uxplay, repeatable, e.g. --uxplay-arg=-pin")
-    u.add_argument("--fps", type=int, default=_env("FPS", 30), help="max fps requested from the phone [AIRPLAY_FPS]")
-
-    g = p.add_argument_group("GStreamer (--receiver gstreamer)")
-    g.add_argument("--gst-pipeline", default=_env("GST_PIPELINE"),
-                   help="gst-launch-1.0 pipeline producing Annex-B H.264 and ending in "
-                        "'tcpclientsink host=127.0.0.1 port={port}'; {port} is filled in [AIRPLAY_GST_PIPELINE]")
-    g.add_argument("--gst-path", default=_env("GST_LAUNCH_PATH"),
-                   help="path to gst-launch-1.0; default: look on PATH [AIRPLAY_GST_LAUNCH_PATH]")
 
     t = p.add_argument_group("MCP transport")
     t.add_argument("--transport", choices=["stdio", "http"], default=_env("TRANSPORT", "stdio"),
@@ -455,7 +409,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
-    # Logs go to stderr: on stdio, stdout is the MCP channel.
     handlers: list[logging.Handler] = [logging.StreamHandler(sys.stderr)]
     if args.log_file:
         handlers.append(logging.FileHandler(Path(args.log_file).expanduser(), encoding="utf-8"))

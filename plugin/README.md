@@ -10,13 +10,6 @@ It runs on your own computer. Claude Code (or another client that runs local MCP
 /plugin install airplay-mcp --marketplace feedthedogs/airplay-mcp
 ```
 
-Then run `/airplay-mcp:setup`. The agent installs [uv](https://docs.astral.sh/uv/) and asks which receiver you want:
-
-- **native**: Recent iOS needs Apple's FairPlay check. The agent extracts the needed files from **your own** iPhone firmware with [ipsw](https://github.com/blacktop/ipsw); they never leave your machine.
-- **uxplay**: The agent installs [UxPlay](https://github.com/FDH2/UxPlay), which handles FairPlay itself.
-
-The agent then tells you which settings to fill in under `/plugin`.
-
 ## Example prompts
 
 - *"Turn on the AirPlay screen, wait for my phone, and tell me the next move in this Sudoku."*

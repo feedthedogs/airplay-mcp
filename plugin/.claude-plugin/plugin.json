@@ -1,8 +1,8 @@
 {
   "name": "airplay-mcp",
   "displayName": "AirPlay Screen",
-  "version": "0.1.5",
-  "description": "Turns your computer into an AirPlay receiver so Claude can see your mirrored iPhone or iPad screen. Runs locally: needs Claude Code or Claude Desktop on the same Wi-Fi as the phone. Run /airplay-mcp:setup first.",
+  "version": "0.2.0",
+  "description": "Turns your computer into an AirPlay receiver so Claude can see your mirrored iPhone or iPad screen. Runs locally: needs Claude Code or Claude Desktop on the same Wi-Fi as the phone.",
   "author": {
     "name": "feedthedogs",
     "url": "https://github.com/feedthedogs"
@@ -16,24 +16,6 @@
   "supportUrl": "https://github.com/feedthedogs/airplay-mcp/issues",
   "privacyPolicyUrl": "https://github.com/feedthedogs/airplay-mcp/blob/main/PRIVACY.md",
   "userConfig": {
-    "receiver": {
-      "type": "string",
-      "title": "Receiver",
-      "description": "Type native (built-in receiver, needs the FairPlay folder below) or uxplay (the UxPlay program). /airplay-mcp:setup helps you pick and install.",
-      "default": "native"
-    },
-    "fp_emu_dir": {
-      "type": "directory",
-      "title": "FairPlay folder (native only)",
-      "description": "Folder holding the four files extracted from your own iPhone firmware. Leave blank for uxplay.",
-      "default": ""
-    },
-    "uxplay_path": {
-      "type": "string",
-      "title": "UxPlay executable (uxplay only)",
-      "description": "Full path to uxplay if it is not on PATH (usual on Windows). Leave blank otherwise.",
-      "default": ""
-    },
     "device_name": {
       "type": "string",
       "title": "AirPlay name",

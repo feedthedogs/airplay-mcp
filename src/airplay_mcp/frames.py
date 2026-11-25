@@ -53,14 +53,25 @@ class ChangeConfig:
     """How many past signatures to keep for ``changes since seq`` crops."""
 
 
-def signature(rgb: np.ndarray) -> np.ndarray:
-    """Downsample to a coarse grayscale grid of block means (float32)."""
+def signature(rgb: np.ndarray, luma: np.ndarray | None = None, luma_full_range: bool = False) -> np.ndarray:
+    """Downsample to a coarse grayscale grid of block means (float32, 0-255).
+
+    Pass the decoder's luma plane when there is one: it already is the grayscale
+    image, which makes this ~10x cheaper than converting from RGB. Limited-range
+    (16-235) luma is stretched to 0-255 so thresholds mean the same either way.
+    """
     h, w = rgb.shape[:2]
     scale = SIG_LONG_EDGE / max(h, w)
     gh, gw = max(1, round(h * scale)), max(1, round(w * scale))
-    gray = rgb[..., 0] * 0.299 + rgb[..., 1] * 0.587 + rgb[..., 2] * 0.114
     # Trim so the image divides evenly into blocks, then average each block.
     bh, bw = max(1, h // gh), max(1, w // gw)
+    if luma is not None and luma.shape[:2] == (h, w):
+        y = luma[: gh * bh, : gw * bw].reshape(gh, bh, gw, bw)
+        sig = y.sum(axis=3, dtype=np.uint32).sum(axis=1).astype(np.float32) / (bh * bw)
+        if not luma_full_range:
+            sig = np.clip((sig - 16.0) * (255.0 / 219.0), 0.0, 255.0, dtype=np.float32)
+        return sig
+    gray = rgb[..., 0] * 0.299 + rgb[..., 1] * 0.587 + rgb[..., 2] * 0.114
     gray = gray[: gh * bh, : gw * bw]
     return gray.reshape(gh, bh, gw, bw).mean(axis=(1, 3), dtype=np.float32)
 
@@ -80,10 +91,16 @@ class FrameStore:
         self._frames_submitted = 0
 
     # ----------------------------------------------------------------- writer
-    def submit(self, rgb: np.ndarray, captured_at: float | None = None) -> bool:
+    def submit(
+        self,
+        rgb: np.ndarray,
+        captured_at: float | None = None,
+        luma: np.ndarray | None = None,
+        luma_full_range: bool = False,
+    ) -> bool:
         """Offer a new decoded frame. Returns True if it produced a new seq."""
         now = captured_at if captured_at is not None else time.time()
-        sig = signature(rgb)
+        sig = signature(rgb, luma, luma_full_range)
         with self._cond:
             self._frames_submitted += 1
             same_shape = self._sig_ref is not None and self._sig_ref.shape == sig.shape
